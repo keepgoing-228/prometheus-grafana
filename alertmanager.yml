@@ -1,0 +1,21 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'slack-notifications'
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 4m
+  repeat_interval: 2h
+
+receivers:
+  - name: 'slack-notifications'
+    slack_configs:
+      - send_resolved: true
+        username: 'Alertmanager'
+        icon_emoji: ':warning:'
+        channel: 'alert-test'
+        api_url: 'https://hooks.slack.com/services/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'
+        title: '{{ .CommonAnnotations.summary }}'
+        text: '{{ .CommonAnnotations.description }}'
+

@@ -1,0 +1,12 @@
+groups:
+  - name: cpu-temperature
+    rules:
+      - alert: HighAverageCPUTemperature
+        expr: avg(node_hwmon_temp_celsius{}) > 85
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Average CPU temperature is too high"
+          description: "The average temperature across all sensors is {{ printf \"%.2f\" $value }}°C for more than 2 minutes."
+
