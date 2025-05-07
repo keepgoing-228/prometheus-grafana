@@ -3,3 +3,11 @@ scrape_configs:
     static_configs:
       - targets: ['node-exporter:9100']
 
+alerting:
+  alertmanagers:
+    - static_configs:
+      - targets:
+        - 'prometheus-alert:9093'
+
+rule_files:
+  - 'alert_rules.yml'
