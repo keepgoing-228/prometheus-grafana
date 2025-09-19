@@ -14,8 +14,8 @@ receivers:
       - send_resolved: true
         username: 'Alertmanager'
         icon_emoji: ':warning:'
-        channel: 'alert-test'
-        api_url: 'https://hooks.slack.com/services/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'
+        channel: '97-prometheus'
+        api_url: 'https://hooks.slack.com/services/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'
         title: '{{ .CommonAnnotations.summary }}'
         text: '{{ .CommonAnnotations.description }}'
 
