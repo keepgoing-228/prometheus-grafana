@@ -54,7 +54,25 @@ Prometheus and Grafana data are stored in named Docker volumes (`prometheus_data
 - `alert_rules.yml`: Alert rules for Prometheus
 - `alertmanager.yml`: Alertmanager configuration (Slack receiver)
 - `grafana/provisioning/datasources/prometheus.yml`: Grafana datasource provisioning
-- `grafana/provisioning/dashboards/dashboards.yml`: Grafana dashboard provider — drop any dashboard JSON into `grafana/provisioning/dashboards/` and it is loaded automatically (e.g. export [Node Exporter Full, ID 1860](https://grafana.com/grafana/dashboards/1860))
+- `grafana/provisioning/dashboards/dashboards.yml`: Grafana dashboard provider — any dashboard JSON in `grafana/provisioning/dashboards/` is loaded automatically (rescanned every 30 s) into the **Monitoring** folder
+
+## Dashboards
+
+| Dashboard | Source | URL |
+|---|---|---|
+| **Host Overview** | custom (`host-overview.json`) | http://localhost:3000/d/host-overview |
+| **Node Exporter Full** | open source, [grafana.com ID 1860](https://grafana.com/grafana/dashboards/1860) | http://localhost:3000/d/rYdddlPWk |
+
+*Host Overview* is an at-a-glance view built for this stack: CPU / RAM / disk gauges, CPU package temperature with the 85 °C alert threshold drawn in, memory breakdown, disk & network throughput, filesystem usage, active Prometheus alerts and scrape-target health. *Node Exporter Full* is the community standard for deep-diving into every node_exporter metric.
+
+To refresh *Node Exporter Full* to the latest upstream revision:
+
+```bash
+curl -s https://grafana.com/api/dashboards/1860/revisions/latest/download \
+  -o grafana/provisioning/dashboards/node-exporter-full.json
+```
+
+To add your own: export a dashboard as JSON from the Grafana UI (Share → Export) and drop the file into `grafana/provisioning/dashboards/`.
 
 ## Operations
 

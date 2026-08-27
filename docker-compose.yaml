@@ -16,6 +16,7 @@ services:
     ports:
       - 9100:9100
     pid: host
+    uts: host
     restart: unless-stopped
     volumes:
       - /proc:/host/proc:ro
