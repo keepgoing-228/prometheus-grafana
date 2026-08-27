@@ -13,8 +13,7 @@ This repository contains a complete monitoring stack using Prometheus, Grafana, 
 
 ### Prerequisites
 
-- Docker and Docker Compose installed
-- Linux/macOS system (for proper file permissions)
+- Docker and Docker Compose (v2+) installed
 
 ### Setup Instructions
 
@@ -24,92 +23,68 @@ This repository contains a complete monitoring stack using Prometheus, Grafana, 
    cd prometheus-grafana
    ```
 
-2. **Set up Grafana data directory permissions:**
-
-   Grafana runs with UID/GID 472 inside the container, so we need to ensure the data directory has the correct permissions:
-   ```bash
-   # Create the grafana_data directory if it doesn't exist
-   mkdir -p ./grafana_data
-
-   # Set proper ownership for Grafana (UID/GID 472)
-   sudo chown -R 472:472 ./grafana_data
-
-   # Set proper permissions
-   sudo chmod -R 755 ./grafana_data
-   ```
-
-3. **Start the monitoring stack:**
+2. **Start the monitoring stack:**
    ```bash
    docker compose up -d
    ```
 
-4. **Verify all services are running:**
+3. **Verify all services are running:**
    ```bash
    docker compose ps
+   curl http://localhost:9090/-/ready
+   curl -u admin:admin http://localhost:3000/api/datasources
    ```
+
+Prometheus and Grafana data are stored in named Docker volumes (`prometheus_data`, `grafana_data`), so no manual directory creation or `chown` is required.
 
 ## Access the Services
 
 - **Grafana**: http://localhost:3000
   - Username: `admin`
   - Password: `admin`
+  - A **Prometheus** datasource (`http://prometheus:9090`) is provisioned automatically.
 - **Prometheus**: http://localhost:9090
 - **Alertmanager**: http://localhost:9093
 - **Node Exporter**: http://localhost:9100
 
 ## Configuration Files
 
-- `prometheus.yml`: Prometheus configuration
+- `docker-compose.yaml`: Service definitions and volumes
+- `prometheus.yml`: Prometheus configuration (scrapes itself and Node Exporter)
 - `alert_rules.yml`: Alert rules for Prometheus
-- `alertmanager.yml`: Alertmanager configuration
-- `grafana/`: Grafana provisioning directory
+- `alertmanager.yml`: Alertmanager configuration (Slack receiver)
+- `grafana/provisioning/datasources/prometheus.yml`: Grafana datasource provisioning
+- `grafana/provisioning/dashboards/dashboards.yml`: Grafana dashboard provider — drop any dashboard JSON into `grafana/provisioning/dashboards/` and it is loaded automatically (e.g. export [Node Exporter Full, ID 1860](https://grafana.com/grafana/dashboards/1860))
 
-## Important Notes
-
-### Grafana Data Persistence
-
-The `./grafana_data` directory must be writable by UID/GID 472 (Grafana's user inside the container). If you encounter permission issues:
-
-```bash
-# Check current ownership
-ls -la ./grafana_data
-
-# Fix ownership if needed
-sudo chown -R 472:472 ./grafana_data
-```
+## Operations
 
 ### Stopping the Stack
 
 ```bash
-docker compose down
+docker compose down          # keep data volumes
+docker compose down -v       # also delete Prometheus/Grafana data
 ```
 
 ### Viewing Logs
 
 ```bash
-# View all logs
-docker compose logs
-
-# View logs for specific service
+docker compose logs -f
 docker compose logs grafana
 docker compose logs prometheus
 ```
 
+### Reloading configuration
+
+```bash
+# After editing prometheus.yml / alert_rules.yml
+docker compose restart prometheus
+# After editing alertmanager.yml
+docker compose restart prometheus-alert
+```
+
 ## Troubleshooting
 
-If Grafana fails to start due to permission issues:
-
-1. Check the ownership of `./grafana_data`:
-   ```bash
-   ls -la ./grafana_data
-   ```
-
-2. Fix ownership:
-   ```bash
-   sudo chown -R 472:472 ./grafana_data
-   ```
-
-3. Restart the services:
-   ```bash
-   docker compose restart grafana
-   ```
+- **Grafana shows no data**: check `docker compose logs grafana` for provisioning errors and confirm the datasource health at
+  Connections → Data sources → Prometheus → *Save & test*.
+- **Target down in Prometheus**: open http://localhost:9090/targets; all services share the compose network and are addressed by service name (`prometheus`, `node-exporter`, `prometheus-alert`).
+- **Alert never fires**: `HighAverageCPUTemperature` relies on `node_hwmon_temp_celsius`, which requires host hardware sensors (often absent in VMs).
