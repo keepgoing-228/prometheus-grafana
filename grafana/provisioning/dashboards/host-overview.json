@@ -277,13 +277,13 @@
     },
     {
       "type": "gauge",
-      "title": "CPU Package Temp",
+      "title": "CPU Temp",
       "id": 5,
       "datasource": {
         "type": "prometheus",
         "uid": "${ds_prometheus}"
       },
-      "description": "CPU package temperature. Red at 85 °C matches the HighAverageCPUTemperature alert.",
+      "description": "CPU package temperature (Intel: Package id 0, AMD: Tctl). Red at 85 °C matches the HighAverageCPUTemperature alert.",
       "gridPos": {
         "h": 5,
         "w": 4,
@@ -296,7 +296,7 @@
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(chip,sensor) group_left(label) node_hwmon_sensor_label{label=~\"Package.*\",instance=~\"$instance\"}",
+          "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(chip,sensor) group_left(label) node_hwmon_sensor_label{label=~\"Package.*|Tctl\",instance=~\"$instance\"}",
           "legendFormat": "",
           "refId": "A",
           "range": false,
@@ -492,16 +492,16 @@
       }
     },
     {
-      "type": "stat",
+      "type": "bargauge",
       "title": "Load Average",
       "id": 8,
       "datasource": {
         "type": "prometheus",
         "uid": "${ds_prometheus}"
       },
-      "description": "",
+      "description": "Full bar = number of CPU cores; red when load exceeds core count.",
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 12,
         "x": 0,
         "y": 6
@@ -545,23 +545,44 @@
           "instant": true,
           "format": "time_series",
           "editorMode": "code"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${ds_prometheus}"
+          },
+          "expr": "count(node_cpu_seconds_total{mode=\"idle\",instance=~\"$instance\"})",
+          "legendFormat": "cores",
+          "refId": "D",
+          "range": false,
+          "instant": true,
+          "format": "time_series",
+          "editorMode": "code"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
-          "mappings": [],
+          "min": 0,
           "decimals": 2,
+          "mappings": [],
           "color": {
-            "mode": "fixed",
-            "fixedColor": "purple"
+            "mode": "thresholds"
           },
           "thresholds": {
-            "mode": "absolute",
+            "mode": "percentage",
             "steps": [
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 100
               }
             ]
           }
@@ -577,14 +598,30 @@
           "values": false
         },
         "orientation": "horizontal",
-        "textMode": "value_and_name",
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "wideLayout": true,
-        "showPercentChange": false,
-        "percentChangeColorMode": "standard"
-      }
+        "displayMode": "basic",
+        "valueMode": "color",
+        "namePlacement": "left",
+        "showUnfilled": true,
+        "sizing": "auto",
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "maxVizHeight": 300
+      },
+      "transformations": [
+        {
+          "id": "configFromData",
+          "options": {
+            "configRefId": "D",
+            "mappings": [
+              {
+                "fieldName": "cores",
+                "handlerKey": "max",
+                "reducerId": "lastNotNull"
+              }
+            ]
+          }
+        }
+      ]
     },
     {
       "type": "stat",
@@ -596,7 +633,7 @@
       },
       "description": "",
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 4,
         "x": 12,
         "y": 6
@@ -665,7 +702,7 @@
       },
       "description": "",
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 4,
         "x": 16,
         "y": 6
@@ -734,7 +771,7 @@
       },
       "description": "",
       "gridPos": {
-        "h": 3,
+        "h": 4,
         "w": 4,
         "x": 20,
         "y": 6
@@ -802,7 +839,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 10
       },
       "panels": []
     },
@@ -819,7 +856,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 11
       },
       "targets": [
         {
@@ -1021,7 +1058,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 11
       },
       "targets": [
         {
@@ -1263,12 +1300,12 @@
         "type": "prometheus",
         "uid": "${ds_prometheus}"
       },
-      "description": "Dashed red line = 85 °C alert threshold (HighAverageCPUTemperature).",
+      "description": "Package/Tctl sensor, CPU Average (mean of all per-core Intel / per-CCD AMD sensors), and every individual core/CCD sensor. Dashed red line = 85 °C alert threshold (HighAverageCPUTemperature).",
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 19
       },
       "targets": [
         {
@@ -1276,8 +1313,8 @@
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(chip,sensor) group_left(label) node_hwmon_sensor_label{label=~\"Package.*\",instance=~\"$instance\"}",
-          "legendFormat": "Package",
+          "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(chip,sensor) group_left(label) node_hwmon_sensor_label{label=~\"Package.*|Tctl\",instance=~\"$instance\"}",
+          "legendFormat": "{{label}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1289,8 +1326,8 @@
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "expr": "avg(node_hwmon_temp_celsius{chip=~\".*coretemp.*\",instance=~\"$instance\"})",
-          "legendFormat": "Cores avg",
+          "expr": "avg(node_hwmon_temp_celsius{instance=~\"$instance\"} * on(chip,sensor) group_left(label) node_hwmon_sensor_label{label=~\"Core.*|Tccd.*\",instance=~\"$instance\"})",
+          "legendFormat": "CPU Average",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -1302,8 +1339,8 @@
             "type": "prometheus",
             "uid": "${ds_prometheus}"
           },
-          "expr": "max(node_hwmon_temp_celsius{chip=~\".*coretemp.*\",instance=~\"$instance\"})",
-          "legendFormat": "Hottest core",
+          "expr": "node_hwmon_temp_celsius{instance=~\"$instance\"} * on(chip,sensor) group_left(label) node_hwmon_sensor_label{label=~\"Core.*|Tccd.*\",instance=~\"$instance\"}",
+          "legendFormat": "{{label}}",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -1368,49 +1405,38 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "Package"
+              "id": "byRegexp",
+              "options": "Tctl|Package.*"
             },
             "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "orange"
-                }
-              },
               {
                 "id": "custom.lineWidth",
                 "value": 2
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Cores avg"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Hottest core"
-            },
-            "properties": [
+              },
               {
                 "id": "color",
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU Average"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "white"
                 }
               },
               {
@@ -1432,7 +1458,16 @@
           "mode": "multi",
           "sort": "desc"
         }
-      }
+      },
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^Tccd(\\d+)$",
+            "renamePattern": "CCD $1"
+          }
+        }
+      ]
     },
     {
       "type": "timeseries",
@@ -1447,7 +1482,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 19
       },
       "targets": [
         {
@@ -1656,7 +1691,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 27
       },
       "panels": []
     },
@@ -1673,7 +1708,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 27
+        "y": 28
       },
       "targets": [
         {
@@ -1792,7 +1827,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 27
+        "y": 28
       },
       "targets": [
         {
@@ -1911,7 +1946,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 27
+        "y": 28
       },
       "targets": [
         {
@@ -2030,7 +2065,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 35
+        "y": 36
       },
       "targets": [
         {
@@ -2108,7 +2143,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 35
+        "y": 36
       },
       "targets": [
         {
@@ -2265,7 +2300,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 43
       },
       "panels": []
     },
@@ -2282,7 +2317,7 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 43
+        "y": 44
       },
       "targets": [
         {
@@ -2367,7 +2402,7 @@
         "h": 6,
         "w": 10,
         "x": 8,
-        "y": 43
+        "y": 44
       },
       "targets": [
         {
@@ -2461,7 +2496,7 @@
         "h": 6,
         "w": 6,
         "x": 18,
-        "y": 43
+        "y": 44
       },
       "targets": [
         {
