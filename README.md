@@ -52,7 +52,7 @@ Prometheus and Grafana data are stored in named Docker volumes (`prometheus_data
 - `docker-compose.yaml`: Service definitions and volumes
 - `prometheus.yml`: Prometheus configuration (scrapes itself and Node Exporter)
 - `alert_rules.yml`: Alert rules for Prometheus
-- `alertmanager.yml`: Alertmanager configuration (Slack receiver)
+- `alertmanager.yml`: Alertmanager configuration (no notification channel configured — alerts visible at http://localhost:9093 and on the Host Overview dashboard)
 - `grafana/provisioning/datasources/prometheus.yml`: Grafana datasource provisioning
 - `grafana/provisioning/dashboards/dashboards.yml`: Grafana dashboard provider — any dashboard JSON in `grafana/provisioning/dashboards/` is loaded automatically (rescanned every 30 s) into the **Monitoring** folder
 

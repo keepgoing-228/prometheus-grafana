@@ -1,21 +1,17 @@
 global:
   resolve_timeout: 5m
 
+# Notifications are currently disabled (Slack was retired).
+# Alerts are still visible in the Alertmanager UI (http://localhost:9093)
+# and on the Host Overview dashboard's "Active Alerts" panel.
+# To add a new notification channel, define a real receiver here and
+# point route.receiver at it.
 route:
-  receiver: 'slack-notifications'
+  receiver: 'null'
   group_by: ['alertname']
   group_wait: 10s
   group_interval: 4m
   repeat_interval: 2h
 
 receivers:
-  - name: 'slack-notifications'
-    slack_configs:
-      - send_resolved: true
-        username: 'Alertmanager'
-        icon_emoji: ':warning:'
-        channel: '97-prometheus'
-        api_url: 'https://hooks.slack.com/services/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'
-        title: '{{ .CommonAnnotations.summary }}'
-        text: '{{ .CommonAnnotations.description }}'
-
+  - name: 'null'
